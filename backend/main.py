@@ -19,9 +19,13 @@ DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
 app = FastAPI(title="AI Resume Screening API")
 
 # Configure CORS so the React frontend can communicate with this API
-origins = [
-    "http://localhost:5173",  # React frontend URL
-]
+cors_env = os.getenv("CORS_ORIGINS", "").strip()
+if cors_env:
+    origins = [origin.strip() for origin in cors_env.split(",") if origin.strip()]
+else:
+    origins = [
+        "http://localhost:5173",  # React frontend URL
+    ]
 
 app.add_middleware(
     CORSMiddleware,
