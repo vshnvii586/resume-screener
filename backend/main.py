@@ -705,19 +705,25 @@ async def match_candidate_to_job(request: MatchRequest):
 
     if DEMO_MODE:
         raw_ai_response = create_demo_match_result(request.candidate_profile, request.job_profile)
-    else:
-        raw_ai_response = analyze_candidate_match_with_gemini(
-            candidate_profile=request.candidate_profile,
-            job_profile=request.job_profile
-        )
-    
-    try:
         parsed_match = json.loads(raw_ai_response)
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=500,
-            detail="The AI returned invalid structured data that could not be parsed as JSON."
-        )
+    else:
+        try:
+            raw_ai_response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    analyze_candidate_match_with_gemini,
+                    candidate_profile=request.candidate_profile,
+                    job_profile=request.job_profile
+                ),
+                timeout=60
+            )
+            parsed_match = json.loads(raw_ai_response)
+        except Exception as e:
+            print(
+                f"Gemini unavailable for matching, using deterministic fallback: {type(e).__name__}",
+                flush=True
+            )
+            raw_ai_response = create_demo_match_result(request.candidate_profile, request.job_profile)
+            parsed_match = json.loads(raw_ai_response)
         
     
     return {
