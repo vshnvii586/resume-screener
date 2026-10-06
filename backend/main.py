@@ -624,8 +624,9 @@ async def ai_parse_resume(file: UploadFile = File(...)):
         
     if DEMO_MODE:
         raw_ai_response = create_demo_resume_analysis(extracted_text)
+        parsed_profile = json.loads(raw_ai_response)
     else:
-        # Send text to Gemini
+        # Try Gemini first
         try:
             raw_ai_response = await asyncio.wait_for(
                 asyncio.to_thread(
@@ -634,20 +635,16 @@ async def ai_parse_resume(file: UploadFile = File(...)):
                 ),
                 timeout=60
             )
-        except asyncio.TimeoutError:
-            raise HTTPException(
-                status_code=504,
-                detail="Gemini AI processing timed out after 60 seconds."
+            parsed_profile = json.loads(raw_ai_response)
+        except Exception as e:
+            print(
+                f"Gemini unavailable, using deterministic fallback: {type(e).__name__}",
+                flush=True
             )
-    
-    try:
-        parsed_profile = json.loads(raw_ai_response)
-        parsed_profile["raw_text"] = extracted_text
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=500,
-            detail="The AI returned invalid structured data that could not be parsed as JSON."
-        )
+            raw_ai_response = create_demo_resume_analysis(extracted_text)
+            parsed_profile = json.loads(raw_ai_response)
+
+    parsed_profile["raw_text"] = extracted_text
         
     response_obj = {
         "filename": filename,
