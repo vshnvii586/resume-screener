@@ -667,18 +667,24 @@ async def parse_job_description(request: JobDescriptionRequest):
         
     if DEMO_MODE:
         raw_ai_response = create_demo_job_analysis(raw_text)
-    else:
-        # Send text to Gemini
-        raw_ai_response = analyze_job_description_with_gemini(raw_text)
-    
-    try:
-        # Parse Gemini's JSON string into a Python dictionary
         parsed_profile = json.loads(raw_ai_response)
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=500,
-            detail="The AI returned invalid structured data that could not be parsed as JSON."
-        )
+    else:
+        try:
+            raw_ai_response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    analyze_job_description_with_gemini,
+                    raw_text
+                ),
+                timeout=60
+            )
+            parsed_profile = json.loads(raw_ai_response)
+        except Exception as e:
+            print(
+                f"Gemini unavailable for job parsing, using deterministic fallback: {type(e).__name__}",
+                flush=True
+            )
+            raw_ai_response = create_demo_job_analysis(raw_text)
+            parsed_profile = json.loads(raw_ai_response)
         
     
     return {
