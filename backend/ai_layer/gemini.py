@@ -172,11 +172,12 @@ async def call_gemini_analysis(extraction_result: dict) -> dict:
         }
     except Exception as e:
         # Catch-all for SDK or network errors (authentication, rate limits, etc.)
+        status_code = getattr(e, "status", "Unknown")
         cli.log_header(f"⚠ GEMINI FAILED\nReason: {type(e).__name__}")
-        cli.log_error("GEMINI", f"API ERROR: {type(e).__name__}")
+        cli.log_error("GEMINI", f"API ERROR: status={status_code}")
         return {
             "status": "error",
             "error_type": "API_ERROR",
-            "message": f"Gemini API error: {str(e)}",
+            "message": f"Gemini API error (Status: {status_code}, Type: {type(e).__name__})",
             "data": None
         }
