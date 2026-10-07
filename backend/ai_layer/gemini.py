@@ -88,10 +88,15 @@ async def call_gemini_analysis(extraction_result: dict) -> dict:
     cli.start_timer("gemini")
     cli.log_info("GEMINI", "Request sent")
 
+    from google.genai import types
+    
     def _sync_call():
         return client.models.generate_content(
             model=GEMINI_MODEL,
-            contents=prompt
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+            )
         )
 
     try:
