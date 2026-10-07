@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import UploadForm from './components/UploadForm';
 import Dashboard from './components/Dashboard';
-import { parseResume, parseJobDescription, matchCandidate, calculateScore } from './services/api';
+import { analyzeApplication } from './services/api';
 import './index.css';
 
 function App() {
@@ -28,22 +28,23 @@ function App() {
     setMatchResult(null);
 
     try {
-      // 1. Parse Resume
-      const parsedCandidateProfile = await parseResume(resumeFile);
+      const data = await analyzeApplication(resumeFile, jobDescription);
       
-      // 2. Parse Job Description
-      const parsedJobProfile = await parseJobDescription(jobDescription);
-
-      // 3. Match
-      const parsedMatchResult = await matchCandidate(parsedCandidateProfile, parsedJobProfile);
-
-      // 4. Score
-      const scoreData = await calculateScore(parsedMatchResult, parsedJobProfile);
+      setCandidateProfile(data.candidate_profile);
       
-      // Store final state to display success
-      setCandidateProfile(parsedCandidateProfile);
-      setMatchResult(parsedMatchResult);
-      setScoreResult(scoreData);
+      setMatchResult({
+        required_skill_match: data.required_skill_match,
+        preferred_skill_match: data.preferred_skill_match,
+        experience_match: data.experience_match,
+        education_match: data.education_match,
+        summary: data.summary,
+        used_fallback: data.used_fallback
+      });
+      
+      setScoreResult({
+        overall_score: data.overall_score,
+        breakdown: data.score_breakdown
+      });
 
     } catch (err) {
       console.error("Pipeline Error:", err);
