@@ -57,7 +57,7 @@ def _build_prompt(extraction_result: dict) -> str:
     """
     return prompt
 
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.8-flash"
 
 async def call_gemini_analysis(extraction_result: dict) -> dict:
     """
@@ -181,3 +181,4 @@ async def call_gemini_analysis(extraction_result: dict) -> dict:
             "message": f"Gemini API error (Status: {status_code}, Type: {type(e).__name__})",
             "data": None
         }
+
