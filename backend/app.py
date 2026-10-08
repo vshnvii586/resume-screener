@@ -20,6 +20,7 @@ if cors_env:
 else:
     origins = [
         "http://localhost:5173",  # React frontend URL
+        "https://resume-screener-frntend.onrender.com",  # Production frontend URL
     ]
 
 app.add_middleware(
